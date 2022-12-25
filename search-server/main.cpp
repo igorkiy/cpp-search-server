@@ -93,9 +93,10 @@ public:
         const Query query = ParseQuery(raw_query);
         auto matched_documents = FindAllDocuments(query, document_predicate);
 
+        constexpr double EPSILON = 1e-6;
         sort(matched_documents.begin(), matched_documents.end(),
-            [](const Document& lhs, const Document& rhs) {
-                if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
+            [EPSILON](const Document& lhs, const Document& rhs) {
+                if (abs(lhs.relevance - rhs.relevance) < EPSILON) {
                     return lhs.rating > rhs.rating;
                 }
                 return lhs.relevance > rhs.relevance;
@@ -165,7 +166,7 @@ private:
         if (ratings.empty()) {
             return 0;
         }
-        return accumulate(ratings.begin(), ratings.end(), 0) / static_cast<int>(ratings.size());
+         return (accumulate(ratings.begin(), ratings.end(), 0) / static_cast<int>(ratings.size()));
     }
 
     struct QueryWord {
@@ -207,7 +208,7 @@ private:
 
     // Existence required
     double ComputeWordInverseDocumentFreq(const string& word) const {
-        return log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(word).size());
+        return  log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(word).size());
     }
 
     template<typename TPredicate>
@@ -225,6 +226,7 @@ private:
             }
         }
         for (const string& word : query.minus_words_) {
+
             if (word_to_document_freqs_.count(word) == 0) {
                 break;
             }
@@ -252,7 +254,7 @@ void AssertEqualImpl(const T& t, const U& u, const string& t_str, const string& 
         cerr << "ASSERT_EQUAL("s << t_str << ", "s << u_str << ") failed: "s;
         cerr << t << " != "s << u << "."s;
         if (!hint.empty()) {
-            cout << " Hint: "s << hint;
+            cerr << " Hint: "s << hint;
         }
         cerr << endl;
         abort();
@@ -305,26 +307,26 @@ void TestExcludeStopWordsFromAddedDocumentContent() {
     }
 }
 
-void RelevanceSortTest() {
-    const int doc_id = 40;
-    const int doc_id2 = 41;
-    const int doc_id3 = 43;
+void TestRelevanceSort() {
+    const int doc_id0 = 40;
+    const int doc_id1 = 41;
+    const int doc_id2 = 42;
 
     vector<int> rating{ 1,2,3 };
-    const string content = "белый кот и модный ошейник"s;
-    const string content2 = "пушистый кот пушистый хвост"s;
-    const string content3 = "ухоженный пёс выразительные глаза"s;
-    const vector<pair<string, double>> IDFTF{{content2, 0.6507}, {content3,0.2746} , {content, 0.1014}};
+    const string content0 = "белый кот и модный ошейник"s;
+    const string content1 = "пушистый кот пушистый хвост"s;
+    const string content2 = "ухоженный пёс выразительные глаза"s;
 
+    vector<int> reference_serial_documents_id{ doc_id1, doc_id2, doc_id0 };
     SearchServer server;
-    server.AddDocument(doc_id,  content,  DocumentStatus::ACTUAL, rating);
+    server.AddDocument(doc_id0, content0,  DocumentStatus::ACTUAL, rating);
+    server.AddDocument(doc_id1, content1, DocumentStatus::ACTUAL, rating);
     server.AddDocument(doc_id2, content2, DocumentStatus::ACTUAL, rating);
-    server.AddDocument(doc_id3, content3, DocumentStatus::ACTUAL, rating);
 
     // проверяем , что документы отсортированы по релевантности
-  const  vector<Document> doc = server.FindTopDocuments(content);
+  const  vector<Document> doc = server.FindTopDocuments("пушистый ухоженный кот");
    for (int i = 0; i < doc.size(); i++) {
-       ASSERT_EQUAL(doc[i].relevance, IDFTF[i].second);
+       ASSERT_EQUAL(doc[i].id , reference_serial_documents_id[i]);
    }
 
 }
@@ -347,17 +349,45 @@ void TestExcludeMinusWordsFromAddedDocumentContent() {
 
 // Тест проверят, что поисковая система корректно возвращает  средний рейтиг документа
 void TestAverageRating() {
-    const int doc_id = 40;
-    const string content = "black cat in the street"s;
-    const vector<int> ratings = { 1, 2, 3 };
-    const int average_rating = (1 + 2 + 3) / 3;
 
     SearchServer server;
-    server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
-    const auto found_docs = server.FindTopDocuments("black cat "s);
-    ASSERT(found_docs.size() == 1);
-    const Document& doc0 = found_docs[0];
-    ASSERT_EQUAL(doc0.rating, average_rating);
+    {
+        // тест с положительным рейтингом
+        const int doc_id = 40;
+        const string content = "yellow chicken in the street"s;
+        vector<int> ratings = { 1 , 2 , 3 };
+        const int average_rating = accumulate(ratings.begin(), ratings.end(), 0) / static_cast<int>(ratings.size());
+        server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
+        const auto found_docs = server.FindTopDocuments("yellow"s);
+        ASSERT(found_docs.size() == 1);
+        const Document& doc0 = found_docs[0];
+        ASSERT_EQUAL(doc0.rating, average_rating);
+    }
+    {
+        // тест со смешаным рейтингом
+        const int doc_id = 41;
+        const string content = "black cat in the street"s;
+        vector<int> ratings = { -1 ,5, -3 , 0};
+        const int average_rating = accumulate(ratings.begin(), ratings.end(), 0) / static_cast<int>(ratings.size());
+        server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
+        const auto found_docs = server.FindTopDocuments("black cat "s);
+        ASSERT(found_docs.size() == 1);
+        const Document& doc0 = found_docs[0];
+        ASSERT_EQUAL(doc0.rating, average_rating);
+
+    }
+    {
+        // тест с отрицательным рейтингом
+        const int doc_id = 42;
+        const string content = "white dog in the street"s;
+       const vector<int> ratings = { -1 ,-7, -3, -1, -3 };
+        const int average_rating = accumulate(ratings.begin(), ratings.end(), 0) / static_cast<int>(ratings.size());
+        server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
+        const auto found_docs = server.FindTopDocuments("white dog "s);
+        ASSERT(found_docs.size() == 1);
+        const Document& doc0 = found_docs[0];
+        ASSERT_EQUAL(doc0.rating, average_rating);
+    }
 }
 
 // Тест проверяет, что поисковая система возвращает документы с указанным статусом
@@ -405,24 +435,29 @@ void TestSearchByStatus() {
     }
 }
 
-/*void TestCorrectRelevanceCalculation() {
-    const int doc_id = 40;
-    const int doc_id = 41;
-    const int doc_id = 42;
-    const int doc_id = 43;
+void TestCorrectRelevanceCalculation() {
+    const int doc_id0 = 40;
+    const int doc_id1 = 41;
+    const int doc_id2 = 42;
 
-    const string content = "black cat in the street"s;
-    const vector<int> ratings = { 1, 2, 3 };
-    const
+    vector<int> rating{ 1,2,3 };
+    const string content0 = "пушистый кот пушистый хвост"s;
+    const string content1 = "ухоженный пёс выразительные глаза"s;
+    const string content2 = "белый кот и модный ошейник"s;
+
+
+    const double IDF_TF_doc0 = 0.650672;
+
     SearchServer server;
-    server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
-    const auto found_docs = server.FindTopDocuments("black cat "s);
-    assert(found_docs.size() == 1);
-    const Document& doc0 = found_docs[0];
-    assert(doc0.relevance == )
+    server.AddDocument(doc_id0, content0, DocumentStatus::ACTUAL, rating);
+    server.AddDocument(doc_id1, content1, DocumentStatus::ACTUAL, rating);
+    server.AddDocument(doc_id2, content2, DocumentStatus::ACTUAL, rating);
+    const  vector<Document> doc = server.FindTopDocuments("пушистый ухоженный кот");
+    constexpr double EPSILON = 1e-6;
+        ASSERT(fabs(doc[0].relevance) - fabs(IDF_TF_doc0) < EPSILON);
+    }
 
 
- }*/
 
 // Тест проверяет,что возвращаются все слова документа и что, документы в которых есть минус слова исключены
 void TestMatchingDocuments() {
@@ -474,11 +509,12 @@ void TestSearchServer() {
     RUN_TEST(TestMatchingDocuments);
     RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
     RUN_TEST(TestExcludeMinusWordsFromAddedDocumentContent);
-    RUN_TEST(TestAverageRating);
     RUN_TEST(TestSearchByStatus);
     RUN_TEST(TestAverageRating);
-}
+    RUN_TEST(TestRelevanceSort);
+    RUN_TEST(TestCorrectRelevanceCalculation);
 
+}
 int main() {
     TestSearchServer();
 }

@@ -102,11 +102,11 @@ public:
         if (documents_.count(document_id) > 0) {
             throw invalid_argument("the document has already been added"s);
         }
-        documents_id_.push_back(document_id);
-
         if(!IsValidWord(document)) {
             throw invalid_argument("some words have unacceptable symbols"s);
         }
+
+        documents_id_.push_back(document_id);
         const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size();
         for (const string& word : words) {
@@ -118,12 +118,6 @@ public:
     template <typename DocumentPredicate>
     vector<Document> FindTopDocuments(const string& raw_query,
         DocumentPredicate document_predicate) const {
-        if (!IsValidWord(raw_query)) {
-            throw invalid_argument("some words have unacceptable symbols"s);
-        }
-        if (!IsValidQuery(raw_query)) {
-            throw invalid_argument("the query has two serial minus or hasnt word after minus"s);
-        }
         const Query query = ParseQuery(raw_query);
         auto matchedDocuments = FindAllDocuments(query, document_predicate);
 
@@ -158,13 +152,8 @@ public:
 
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query,
         int document_id) const {
-        if (!IsValidWord(raw_query)) {
-            throw invalid_argument("the query has unacceptable symbols"s);
-        }
-        if (!IsValidQuery(raw_query)) {
-            throw invalid_argument("the query has two serial minus or hasnt word after minus"s);
-        }
         const Query query = ParseQuery(raw_query);
+
         vector<string> matched_words;
         for (const string& word : query.plus_words_) {
             if (word_to_document_freqs_.count(word) == 0) {
@@ -230,16 +219,21 @@ private:
         string data_;
         bool is_minus_;
         bool is_stop_;
+        bool is_invalid_word;
     };
 
     QueryWord ParseQueryWord(string text) const {
         bool is_minus = false;
+        bool is_invalid = false;
         // Word shouldn't be empty
         if (text[0] == '-') {
             is_minus = true;
+            if (text[1] == '-' || text.size() == 1 ||  !IsValidWord(text)) {
+                is_invalid = true;
+            }
             text = text.substr(1);
         }
-        return { text, is_minus, IsStopWord(text) };
+        return { text, is_minus, IsStopWord(text), is_invalid };
     }
 
     struct Query {
@@ -251,6 +245,9 @@ private:
         Query query;
         for (const string& word : SplitIntoWords(text)) {
             const QueryWord query_word = ParseQueryWord(word);
+            if (query_word.is_invalid_word) {
+                    throw invalid_argument("the query has unacceptable symbols"s);
+            }
             if (!query_word.is_stop_) {
                 if (query_word.is_minus_) {
                     query.minus_words_.insert(query_word.data_);
@@ -300,22 +297,6 @@ private:
         return matched_documents;
     }
 
-    bool IsValidQuery(const string& text) const {
-        bool is_letter = false;
-        for (auto i = 0; i < text.size(); i++) {
-            if (text[i] != '-' && text[i] != ' ') {
-                is_letter = true;
-                continue;
-            }
-            if (text[i] == '-') {
-                is_letter = false;
-                if (text[i + 1] == '-') {
-                    return false;
-                }
-            }
-        }
-        return is_letter;
-    }
     static bool IsValidWord(const string& word) {
         // A valid word must not contain special characters
         return none_of(word.begin(), word.end(), [](char c) {
@@ -525,6 +506,8 @@ void TestCorrectRelevanceCalculation() {
     const string content0 = "пушистый кот пушистый хвост"s;
     const string content1 = "ухоженный пёс выразительные глаза"s;
     const string content2 = "белый кот и модный ошейник"s;
+
+
     const double IDF_TF_doc0 = 0.650672;
 
     SearchServer server("test"s);
@@ -572,6 +555,7 @@ void TestMatchingDocuments() {
     ASSERT(get<DocumentStatus>(server.MatchDocument("black cat", doc_idREMOVED)) == DocumentStatus::REMOVED);
 }
 
+
 // --------- Окончание модульных тестов поисковой системы -----------
 
 template <typename TFunc>
@@ -592,6 +576,8 @@ void TestSearchServer() {
 }
 
 
+
+
 // ==================== для примера =========================
 
     void PrintDocument(const Document& document) {
@@ -600,7 +586,6 @@ void TestSearchServer() {
             << "relevance = "s << document.relevance << ", "s
             << "rating = "s << document.rating << " }"s << endl;
     }
-
 
     int main() {
         setlocale(LC_ALL, "rus");
@@ -636,8 +621,19 @@ void TestSearchServer() {
             }
         }
         catch(invalid_argument) {
+            cerr << "Ошибка в поисковом запросе недопустимый символ"s << endl;
+        }
+
+        try {
+            const auto documents = search_server.FindTopDocuments("-"s);
+            for (const Document& document : documents) {
+                PrintDocument(document);
+            }
+        }
+        catch (invalid_argument) {
             cerr << "Ошибка в поисковом запросе"s << endl;
         }
+
         try {
             search_server.GetDocumentId(20);
         }
@@ -645,4 +641,3 @@ void TestSearchServer() {
             cerr << "документ с данным id не найден"s << endl;
         }
     }
-// ===============================================================================

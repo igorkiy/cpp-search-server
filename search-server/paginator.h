@@ -8,18 +8,19 @@
 template<typename Iterator>
 class IteratorRange {
 public:
-    IteratorRange(const Iterator& begin, const Iterator& end) : page_(begin, end) {}
+    IteratorRange(const Iterator& begin, const Iterator& end) : begin_(begin), end_(end) {}
     auto begin() const {
-        return page_.first;
+        return begin_;
     }
     auto end() const {
-        return page_.second;
+        return end_;
     }
     size_t size() const {
-        return (distance(begin, end));
+        return (distance(begin_, end_));
     }
 private:
-    std::pair<Iterator, Iterator> page_; //пара указателей на начало и конец страницы 
+    Iterator begin_;
+    Iterator end_;
 };
 
 template<class Iterator>
@@ -53,17 +54,17 @@ private:
     std::vector<IteratorRange<Iterator> > pages_;  // вектор страниц
 };
 
-std::ostream& operator <<(std::ostream& os, Document page) {
+std::ostream& operator<<(std::ostream& os, Document document) {
     using namespace std;
     os << "{ "s
-        << "document_id = "s << page.id << ", "s
-        << "relevance = "s << page.relevance << ", "s
-        << "rating = "s << page.rating << " }"s;
+        << "document_id = "s << document.id << ", "s
+        << "relevance = "s << document.relevance << ", "s
+        << "rating = "s << document.rating << " }"s;
     return os;
 }
 
 template<typename Iterator>
-std::ostream& operator <<(std::ostream& os, const  IteratorRange<Iterator> page) {
+std::ostream& operator<<(std::ostream& os, const IteratorRange<Iterator> page) {
     for (auto it = page.begin(); it != page.end(); it++) {
         os << *it;
     }

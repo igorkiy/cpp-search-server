@@ -10,64 +10,32 @@ public:
     explicit RequestQueue(const SearchServer& search_server);
 
     template <typename DocumentPredicate>
-    std::vector<Document> AddFindRequest(const std::string& raw_query, DocumentPredicate document_predicate) {
-        auto result = server_.FindTopDocuments(raw_query, document_predicate);
-        requests_.push_back({ result, !result.empty() });
-        total_request_cnt_++;
-        if (result.empty()) {
-            no_result_cnt_++;
-        }
-        check_and_update_deque();
-        return result;
-    }
-   
-    std::vector<Document> AddFindRequest(const std::string& raw_query, DocumentStatus status) {        
-        auto result = server_.FindTopDocuments(raw_query, status);
-        requests_.push_back({ result, !result.empty() });
-        total_request_cnt_++;
-        if (result.empty()) {
-            no_result_cnt_++;
-        }
-        check_and_update_deque();
-        return result;
-    }
-
-    std::vector<Document> AddFindRequest(const std::string& raw_query) {
-        auto result = server_.FindTopDocuments(raw_query);
-        requests_.push_back({ result, !result.empty() });
-        total_request_cnt_++;
-        if (result.empty()) {
-            no_result_cnt_++;
-        }
-        check_and_update_deque();
-        return result;
-    }
+    std::vector<Document> AddFindRequest(const std::string& raw_query, DocumentPredicate document_predicate);
+    std::vector<Document> AddFindRequest(const std::string& raw_query, DocumentStatus status);
+    std::vector<Document> AddFindRequest(const std::string & raw_query);
 
     int GetNoResultRequests() const;
-
 private:
     struct QueryResult {
-        std::vector<Document> result;
-        bool is_no_result_;
-        
+        int timestapm;
+        int result;
     };
 
-    void check_and_update_deque() {
-        if (total_request_cnt_ > min_in_day_) {
-            if (!requests_.front().is_no_result_) {
-                no_result_cnt_--;
-            }
-            else {
-                total_request_cnt_--;
-            }
-            requests_.pop_front();
-        }
-    }
+    void AddRequest(int result_number);
+    void check_and_update_deque();
 
     std::deque<QueryResult> requests_;
     const SearchServer& server_;
     const static int min_in_day_ = 1440;
     int no_result_cnt_;
-    int total_request_cnt_;
+    int current_time_;
 };
 
+
+template <typename DocumentPredicate>
+std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query, DocumentPredicate document_predicate) {
+    const auto result = server_.FindTopDocuments(raw_query, document_predicate);
+    AddRequest(result.size());
+    check_and_update_deque();
+    return result;
+}

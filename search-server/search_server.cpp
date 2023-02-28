@@ -1,8 +1,8 @@
-#include "search_server.h"
+// в качестве заготовки кода используйте последнюю версию своей поисковой системы#include "search_server.h"
 #include "read_input_functions.h"
 #include "string_processing.h"
+#include "search_server.h"
 #include <cmath>
-
 
 using namespace std;
 
@@ -23,6 +23,7 @@ using namespace std;
         const double inv_word_count = 1.0 / words.size();
         for (const string& word : words) {
             word_to_document_freqs_[word][document_id] += inv_word_count;
+            word_freq_[document_id][word] += inv_word_count;
         }
         documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status });
         document_ids_.push_back(document_id);
@@ -31,10 +32,20 @@ using namespace std;
     int SearchServer::GetDocumentCount() const {
         return documents_.size();
     }
-
-    int SearchServer::GetDocumentId(int index) const {
-        return document_ids_.at(index);
+    std::vector<int>::const_iterator  SearchServer::begin() const {
+        return document_ids_.begin();
     }
+    std::vector<int>::const_iterator SearchServer::end() const {
+        return document_ids_.end();
+    }
+
+    std::vector<int>::iterator  SearchServer::begin() {
+        return document_ids_.begin();
+    }
+    std::vector<int>::iterator SearchServer::end() {
+        return document_ids_.end();
+    }
+    
 
     tuple< vector<string>, DocumentStatus> SearchServer::MatchDocument(const string& raw_query,
         int document_id) const {
@@ -145,3 +156,30 @@ using namespace std;
     std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query) const {
         return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
     }
+
+    //============================ new method ================================
+    const std::map<std::string, double>& SearchServer::GetWordFrequencies(int document_id) const {
+        static map<std::string, double>  word_freq;
+        if (word_freq_.count(document_id) == 0) {
+            return word_freq;
+        }
+        return {word_freq_.at(document_id)};
+    }
+
+    void SearchServer::RemoveDocument(int document_id) {
+        word_freq_.erase(document_id);
+        documents_.erase(document_id); 
+
+        auto it = std::remove(document_ids_.begin(), document_ids_.end(), document_id);
+        document_ids_.erase(it, document_ids_.end());
+
+        for (auto element : word_to_document_freqs_) {
+            auto it = element.second.find(document_id);
+            if (it != element.second.end()) {
+                it = element.second.erase(it);
+            }
+        }
+    }
+
+    
+

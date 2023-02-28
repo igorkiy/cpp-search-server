@@ -1,3 +1,4 @@
+// в качестве заготовки кода используйте последнюю версию своей поисковой системы
 #include "string_processing.h"
 
 using namespace std;

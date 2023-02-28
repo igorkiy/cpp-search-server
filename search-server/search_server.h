@@ -1,5 +1,5 @@
 #pragma once
-#include "search_server.h"
+
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -24,8 +24,17 @@ public:
     std::vector<Document> FindTopDocuments(const std::string& raw_query, DocumentStatus status) const;
     std::vector<Document> FindTopDocuments(const std::string& raw_query) const;
 
+
+    //============================ new method ================================
     int GetDocumentCount() const;
-    int GetDocumentId(int index) const;
+    std::vector<int>::const_iterator begin() const;
+    std::vector<int>::const_iterator end() const;
+    std::vector<int>::iterator begin();
+    std::vector<int>::iterator end(); 
+    
+    const std::map<std::string, double> &GetWordFrequencies(int document_id) const;
+    void RemoveDocument(int document_id);
+
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query,int document_id) const;
 
 private:
@@ -42,6 +51,8 @@ private:
 
     const std::set<std::string> stop_words_;
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
+    std::map<int, std::map<std::string, double>> word_freq_; 
+
     std::map<int, DocumentData> documents_;
     std::vector<int> document_ids_;
 
@@ -63,6 +74,8 @@ private:
     std::vector<Document> FindAllDocuments(const Query& query,
         DocumentPredicate document_predicate) const;
 };
+
+
 
 
 template <typename StringContainer>
@@ -132,3 +145,4 @@ std::vector<Document> SearchServer::FindAllDocuments(const Query& query,
     }
     return matched_documents;
 }
+

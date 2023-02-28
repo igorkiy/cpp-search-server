@@ -32,10 +32,10 @@ public:
 
         while (distance(page_end, end) > size) {
             advance(page_end, size);
-            pages_.push_back(IteratorRange<Iterator>(page_begin, page_end)); //добавляем страницу
+            pages_.push_back(IteratorRange<Iterator>(page_begin, page_end)); //РґРѕР±Р°РІР»СЏРµРј СЃС‚СЂР°РЅРёС†Сѓ
             page_begin = page_end;
         }
-        if (page_begin != end) { // если begin не дошел до конца значит добавляем неполную страницу от begin до end
+        if (page_begin != end) { // РµСЃР»Рё begin РЅРµ РґРѕС€РµР» РґРѕ РєРѕРЅС†Р° Р·РЅР°С‡РёС‚ РґРѕР±Р°РІР»СЏРµРј РЅРµРїРѕР»РЅСѓСЋ СЃС‚СЂР°РЅРёС†Сѓ РѕС‚ begin РґРѕ end
             pages_.push_back(IteratorRange<Iterator>(page_end, end));
         }
     }
@@ -45,13 +45,13 @@ public:
     auto end() const {
         return pages_.end();
     }
-    size_t size() const {  // возвращает количество страниц
+    size_t size() const {  // РІРѕР·РІСЂР°С‰Р°РµС‚ РєРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚СЂР°РЅРёС†
         return pages_.size();
     }
 
 private:
-    const size_t page_size_;  //размер одной страницы
-    std::vector<IteratorRange<Iterator> > pages_;  // вектор страниц
+    const size_t page_size_;  //СЂР°Р·РјРµСЂ РѕРґРЅРѕР№ СЃС‚СЂР°РЅРёС†С‹
+    std::vector<IteratorRange<Iterator> > pages_;  // РІРµРєС‚РѕСЂ СЃС‚СЂР°РЅРёС†
 };
 
 std::ostream& operator<<(std::ostream& os, Document document) {

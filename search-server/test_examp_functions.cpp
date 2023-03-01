@@ -1,11 +1,10 @@
-// РІ РєР°С‡РµСЃС‚РІРµ Р·Р°РіРѕС‚РѕРІРєРё РєРѕРґР° РёСЃРїРѕР»СЊР·СѓР№С‚Рµ РїРѕСЃР»РµРґРЅСЋСЋ РІРµСЂСЃРёСЋ СЃРІРѕРµР№ РїРѕРёСЃРєРѕРІРѕР№ СЃРёСЃС‚РµРјС‹
-#include "test_example_functions.h"
+#include "test_examp_functions.h"
 #include <numeric>
 
-// -------- РќР°С‡Р°Р»Рѕ РјРѕРґСѓР»СЊРЅС‹С… С‚РµСЃС‚РѕРІ РїРѕРёСЃРєРѕРІРѕР№ СЃРёСЃС‚РµРјС‹ ----------
+// -------- Начало модульных тестов поисковой системы ----------
 using namespace std;
 //
-//// РўРµСЃС‚ РїСЂРѕРІРµСЂСЏРµС‚, С‡С‚Рѕ РїРѕРёСЃРєРѕРІР°СЏ СЃРёСЃС‚РµРјР° РёСЃРєР»СЋС‡Р°РµС‚ СЃС‚РѕРї-СЃР»РѕРІР° РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕРєСѓРјРµРЅС‚РѕРІ
+//// Тест проверяет, что поисковая система исключает стоп-слова при добавлении документов
 //void TestExcludeStopWordsFromAddedDocumentContent() {
 //    const int doc_id = 42;
 //    const string content = "cat in the city"s;
@@ -33,9 +32,9 @@ using namespace std;
 //    const int doc_id2 = 42;
 //
 //    vector<int> rating{ 1,2,3 };
-//    const string content0 = "Р±РµР»С‹Р№ РєРѕС‚ Рё РјРѕРґРЅС‹Р№ РѕС€РµР№РЅРёРє"s;
-//    const string content1 = "РїСѓС€РёСЃС‚С‹Р№ РєРѕС‚ РїСѓС€РёСЃС‚С‹Р№ С…РІРѕСЃС‚"s;
-//    const string content2 = "СѓС…РѕР¶РµРЅРЅС‹Р№ РїС‘СЃ РІС‹СЂР°Р·РёС‚РµР»СЊРЅС‹Рµ РіР»Р°Р·Р°"s;
+//    const string content0 = "белый кот и модный ошейник"s;
+//    const string content1 = "пушистый кот пушистый хвост"s;
+//    const string content2 = "ухоженный пёс выразительные глаза"s;
 //
 //    vector<int> reference_serial_documents_id{ doc_id1, doc_id2, doc_id0 };
 //    SearchServer server("test"s);
@@ -43,15 +42,15 @@ using namespace std;
 //    AddDocument(server,doc_id1, content1, DocumentStatus::ACTUAL, rating);
 //    AddDocument(server,doc_id2, content2, DocumentStatus::ACTUAL, rating);
 //
-//    // РїСЂРѕРІРµСЂСЏРµРј , С‡С‚Рѕ РґРѕРєСѓРјРµРЅС‚С‹ РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅС‹ РїРѕ СЂРµР»РµРІР°РЅС‚РЅРѕСЃС‚Рё
-//    const  vector<Document> doc = server.FindTopDocuments("РїСѓС€РёСЃС‚С‹Р№ СѓС…РѕР¶РµРЅРЅС‹Р№ РєРѕС‚");
+//    // проверяем , что документы отсортированы по релевантности
+//    const  vector<Document> doc = server.FindTopDocuments("пушистый ухоженный кот");
 //    for (int i = 0; i < doc.size(); i++) {
 //        ASSERT_EQUAL(doc[i].id, reference_serial_documents_id[i]);
 //    }
 //
 //}
 //
-//// РўРµСЃС‚ РїСЂРѕРІРµСЂСЏРµС‚, С‡С‚Рѕ РїРѕРёСЃРєРѕРІР°СЏ СЃРёСЃС‚РµРјР° РёСЃРєР»СЋС‡РµС‚ РґРѕРєСѓРјРµРЅС‚С‹ СЃРѕРґРµСЂР¶Р°С‰РёРµ РјРёРЅСѓСЃ СЃР»РѕРІР°
+//// Тест проверяет, что поисковая система исключет документы содержащие минус слова
 //void TestExcludeMinusWordsFromAddedDocumentContent() {
 //    const int doc_id = 40;
 //    const int doc_id2 = 41;
@@ -67,12 +66,12 @@ using namespace std;
 //    ASSERT_EQUAL(doc[0].id, doc_id);
 //}
 //
-//// РўРµСЃС‚ РїСЂРѕРІРµСЂСЏС‚, С‡С‚Рѕ РїРѕРёСЃРєРѕРІР°СЏ СЃРёСЃС‚РµРјР° РєРѕСЂСЂРµРєС‚РЅРѕ РІРѕР·РІСЂР°С‰Р°РµС‚  СЃСЂРµРґРЅРёР№ СЂРµР№С‚РёРі РґРѕРєСѓРјРµРЅС‚Р°
+//// Тест проверят, что поисковая система корректно возвращает  средний рейтиг документа
 //void TestAverageRating() {
 //
 //    SearchServer server("test"s);
 //    {
-//        // С‚РµСЃС‚ СЃ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рј СЂРµР№С‚РёРЅРіРѕРј
+//        // тест с положительным рейтингом
 //        const int doc_id = 40;
 //        const string content = "yellow chicken in the street"s;
 //        vector<int> ratings = { 1 , 2 , 3 };
@@ -84,7 +83,7 @@ using namespace std;
 //        ASSERT_EQUAL(doc0.rating, average_rating);
 //    }
 //    {
-//        // С‚РµСЃС‚ СЃРѕ СЃРјРµС€Р°РЅС‹Рј СЂРµР№С‚РёРЅРіРѕРј
+//        // тест со смешаным рейтингом
 //        const int doc_id = 41;
 //        const string content = "black cat in the street"s;
 //        vector<int> ratings = { -1 ,5, -3 , 0 };
@@ -97,7 +96,7 @@ using namespace std;
 //
 //    }
 //    {
-//        // С‚РµСЃС‚ СЃ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅС‹Рј СЂРµР№С‚РёРЅРіРѕРј
+//        // тест с отрицательным рейтингом
 //        const int doc_id = 42;
 //        const string content = "white dog in the street"s;
 //        const vector<int> ratings = { -1 ,-7, -3, -1, -3 };
@@ -110,7 +109,7 @@ using namespace std;
 //    }
 //}
 //
-//// РўРµСЃС‚ РїСЂРѕРІРµСЂСЏРµС‚, С‡С‚Рѕ РїРѕРёСЃРєРѕРІР°СЏ СЃРёСЃС‚РµРјР° РІРѕР·РІСЂР°С‰Р°РµС‚ РґРѕРєСѓРјРµРЅС‚С‹ СЃ СѓРєР°Р·Р°РЅРЅС‹Рј СЃС‚Р°С‚СѓСЃРѕРј
+//// Тест проверяет, что поисковая система возвращает документы с указанным статусом
 //void TestSearchByStatus() {
 //    const int doc_idACTUAL = 40;
 //    const int doc_idIRRELEVANT = 41;
@@ -127,28 +126,28 @@ using namespace std;
 //    AddDocument(server, doc_idREMOVED, content, DocumentStatus::REMOVED, ratings);
 //    {
 //        const auto found_docs = server.FindTopDocuments("black cat "s, DocumentStatus::ACTUAL);
-//        //  РїСЂРѕРІРµСЂСЏРµРј С‡С‚Рѕ РЅР°Р№РґРµРЅ С‚РѕР»СЊРєРѕ РѕРґРёРЅ РґРѕРєСѓРјРµРЅС‚
+//        //  проверяем что найден только один документ
 //        ASSERT(found_docs.size() == 1);
 //        const Document& doc0 = found_docs[0];
 //        ASSERT_EQUAL(doc0.id, doc_idACTUAL);
 //    }
 //    {
 //        const auto found_docs = server.FindTopDocuments("black cat "s, DocumentStatus::BANNED);
-//        //  РїСЂРѕРІРµСЂСЏРµРј С‡С‚Рѕ РЅР°Р№РґРµРЅ С‚РѕР»СЊРєРѕ РѕРґРёРЅ РґРѕРєСѓРјРµРЅС‚
+//        //  проверяем что найден только один документ
 //        ASSERT(found_docs.size() == 1);
 //        const Document& doc0 = found_docs[0];
 //        ASSERT_EQUAL(doc0.id, doc_idBANNED);
 //    }
 //    {
 //        const auto found_docs = server.FindTopDocuments("black cat "s, DocumentStatus::IRRELEVANT);
-//        //  РїСЂРѕРІРµСЂСЏРµРј С‡С‚Рѕ РЅР°Р№РґРµРЅ С‚РѕР»СЊРєРѕ РѕРґРёРЅ РґРѕРєСѓРјРµРЅС‚
+//        //  проверяем что найден только один документ
 //        ASSERT(found_docs.size() == 1);
 //        const Document& doc0 = found_docs[0];
 //        ASSERT_EQUAL(doc0.id, doc_idIRRELEVANT);
 //    }
 //    {
 //        const auto found_docs = server.FindTopDocuments("black cat "s, DocumentStatus::REMOVED);
-//        //  РїСЂРѕРІРµСЂСЏРµРј С‡С‚Рѕ РЅР°Р№РґРµРЅ С‚РѕР»СЊРєРѕ РѕРґРёРЅ РґРѕРєСѓРјРµРЅС‚
+//        //  проверяем что найден только один документ
 //        ASSERT(found_docs.size() == 1);
 //        const Document& doc0 = found_docs[0];
 //        ASSERT_EQUAL(doc0.id, doc_idREMOVED);
@@ -161,9 +160,9 @@ using namespace std;
 //    const int doc_id2 = 42;
 //
 //    vector<int> rating{ 1,2,3 };
-//    const string content0 = "РїСѓС€РёСЃС‚С‹Р№ РєРѕС‚ РїСѓС€РёСЃС‚С‹Р№ С…РІРѕСЃС‚"s;
-//    const string content1 = "СѓС…РѕР¶РµРЅРЅС‹Р№ РїС‘СЃ РІС‹СЂР°Р·РёС‚РµР»СЊРЅС‹Рµ РіР»Р°Р·Р°"s;
-//    const string content2 = "Р±РµР»С‹Р№ РєРѕС‚ Рё РјРѕРґРЅС‹Р№ РѕС€РµР№РЅРёРє"s;
+//    const string content0 = "пушистый кот пушистый хвост"s;
+//    const string content1 = "ухоженный пёс выразительные глаза"s;
+//    const string content2 = "белый кот и модный ошейник"s;
 //
 //
 //    const double IDF_TF_doc0 = 0.650672;
@@ -172,12 +171,12 @@ using namespace std;
 //    AddDocument(server,doc_id0, content0, DocumentStatus::ACTUAL, rating);
 //    AddDocument(server,doc_id1, content1, DocumentStatus::ACTUAL, rating);
 //    AddDocument(server,doc_id2, content2, DocumentStatus::ACTUAL, rating);
-//    const  vector<Document> doc = server.FindTopDocuments("РїСѓС€РёСЃС‚С‹Р№ СѓС…РѕР¶РµРЅРЅС‹Р№ РєРѕС‚");
+//    const  vector<Document> doc = server.FindTopDocuments("пушистый ухоженный кот");
 //    constexpr double EPSILON = 1e-6;
 //    ASSERT(fabs(doc[0].relevance) - fabs(IDF_TF_doc0) < EPSILON);
 //}
 //
-//// РўРµСЃС‚ РїСЂРѕРІРµСЂСЏРµС‚,С‡С‚Рѕ РІРѕР·РІСЂР°С‰Р°СЋС‚СЃСЏ РІСЃРµ СЃР»РѕРІР° РґРѕРєСѓРјРµРЅС‚Р° Рё С‡С‚Рѕ, РґРѕРєСѓРјРµРЅС‚С‹ РІ РєРѕС‚РѕСЂС‹С… РµСЃС‚СЊ РјРёРЅСѓСЃ СЃР»РѕРІР° РёСЃРєР»СЋС‡РµРЅС‹
+//// Тест проверяет,что возвращаются все слова документа и что, документы в которых есть минус слова исключены
 //void TestMatchingDocuments() {
 //
 //    const int doc_id = 40;
@@ -185,18 +184,18 @@ using namespace std;
 //    const vector<int> ratings = { 1, 2, 3 };
 //
 //    SearchServer server("test"s);
-//    // РїСЂРѕРІРµСЂСЏРµРј С‡С‚Рѕ РІРѕР·РІСЂР°С‰Р°СЋС‚СЃСЏ РІСЃРµ СЃР»РѕРІР° Р·Р°РїСЂРѕСЃР°
+//    // проверяем что возвращаются все слова запроса
 //    AddDocument(server, doc_id, content, DocumentStatus::ACTUAL, ratings);
 //    const vector<string> contentWords = { "black"s, "cat"s, "in"s, "the"s, "street"s };
 //    const vector<string> matchedWords = get<vector<string>>(server.MatchDocument(content, doc_id));
 //    ASSERT_EQUAL(matchedWords.size(), contentWords.size());
 //
-//    // РїСЂРѕРІРµСЂСЏРµРј С‡С‚Рѕ РїСЂРё РЅР°Р»РёС‡РёРё РјРёРЅСѓСЃ СЃР»РѕРІ РІ Р·Р°РїСЂРѕСЃРµ РІРѕР·РІСЂР°С‰Р°РµС‚СЃСЏ РїСѓСЃС‚РѕР№ СЃРїРёСЃРѕРє СЃР»РѕРІ
+//    // проверяем что при наличии минус слов в запросе возвращается пустой список слов
 //    const string queryWithMinusWords = "black cat in -the street"s;
 //    const vector<string> emptyListMatchedWords = get<vector<string>>(server.MatchDocument(queryWithMinusWords, doc_id));
 //    ASSERT(emptyListMatchedWords.empty());
 //
-//    //РїСЂРѕРІРµСЂСЏРµРј С‡С‚Рѕ MatchDocuments РїСЂР°РІРёР»СЊРЅРѕ РІРѕР·РІСЂСЏС‰Р°РµС‚ СЃС‚Р°С‚СѓСЃ
+//    //проверяем что MatchDocuments правильно возврящает статус
 //    const int doc_idACTUAL = 40;
 //    const int doc_idIRRELEVANT = 41;
 //    const int doc_idBANNED = 42;
@@ -214,7 +213,7 @@ using namespace std;
 //}
 //
 //
-//// --------- РћРєРѕРЅС‡Р°РЅРёРµ РјРѕРґСѓР»СЊРЅС‹С… С‚РµСЃС‚РѕРІ РїРѕРёСЃРєРѕРІРѕР№ СЃРёСЃС‚РµРјС‹ -----------
+//// --------- Окончание модульных тестов поисковой системы -----------
 //
 //void TestSearchServer() {
 //    RUN_TEST(TestMatchingDocuments);

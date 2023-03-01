@@ -1,4 +1,3 @@
-// в качестве заготовки кода используйте последнюю версию своей поисковой системы
 #include "read_input_functions.h"
 #include <iostream>
 

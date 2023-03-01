@@ -1,11 +1,10 @@
-// в качестве заготовки кода используйте последнюю версию своей поисковой системы#include "search_server.h"
+#include "search_server.h"
 #include "read_input_functions.h"
 #include "string_processing.h"
-#include "search_server.h"
+#include <numeric>
 #include <cmath>
 
 using namespace std;
-
     SearchServer::SearchServer(const string& stop_words_text)
         : SearchServer(
             SplitIntoWords(stop_words_text))  // Invoke delegating constructor from string container
@@ -38,7 +37,6 @@ using namespace std;
     std::vector<int>::const_iterator SearchServer::end() const {
         return document_ids_.end();
     }
-
     std::vector<int>::iterator  SearchServer::begin() {
         return document_ids_.begin();
     }
@@ -46,7 +44,6 @@ using namespace std;
         return document_ids_.end();
     }
     
-
     tuple< vector<string>, DocumentStatus> SearchServer::MatchDocument(const string& raw_query,
         int document_id) const {
         const auto query = ParseQuery(raw_query);
@@ -100,11 +97,7 @@ using namespace std;
         if (ratings.empty()) {
             return 0;
         }
-        int rating_sum = 0;
-        for (const int rating : ratings) {
-            rating_sum += rating;
-        }
-        return rating_sum / static_cast<int>(ratings.size());
+       return accumulate(ratings.begin(), ratings.end(), 0) / static_cast<int>(ratings.size());
     }
 
     SearchServer::QueryWord SearchServer::ParseQueryWord(const string& text) const {
@@ -159,9 +152,8 @@ using namespace std;
 
     //============================ new method ================================
     const std::map<std::string, double>& SearchServer::GetWordFrequencies(int document_id) const {
-        static map<std::string, double>  word_freq;
         if (word_freq_.count(document_id) == 0) {
-            return word_freq;
+            return {};
         }
         return {word_freq_.at(document_id)};
     }

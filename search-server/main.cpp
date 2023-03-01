@@ -1,4 +1,4 @@
-// в качестве заготовки кода используйте последнюю версию своей поисковой системы
+﻿
 #include <iostream>
 #include <string>
 #include "document.h"
@@ -8,7 +8,7 @@
 #include "search_server.h"
 #include "string_processing.h"
 #include "log_duration.h"
-#include "test_example_functions.h"
+#include "test_examp_functions.h"
 #include "remove_duplicates.h"
 
 using namespace std;

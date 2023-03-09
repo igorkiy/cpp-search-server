@@ -1,4 +1,5 @@
 #include "request_queue.h"
+
 RequestQueue::RequestQueue(const SearchServer& search_server) : server_(search_server) {
     // напишите реализацию
     no_result_cnt_ = 0;
